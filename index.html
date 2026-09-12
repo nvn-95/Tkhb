@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignAI | English to ISL Gloss</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --card: #16161a;
+            --primary: #6366f1; /* Indigo */
+            --primary-glow: rgba(99, 102, 241, 0.3);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #8b5cf6;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% 50%, #1c1c24 0%, var(--bg) 100%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+
+        /* ── GLOSS DISPLAY ── */
+        .gloss-card {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px;
+            padding: 60px 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .gloss-result {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary-glow);
+            transition: all 0.3s ease;
+        }
+
+        .gloss-placeholder {
+            color: #334155;
+            font-size: 1.2rem;
+            font-style: italic;
+        }
+
+        /* ── INPUT SECTION ── */
+        .input-group {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            display: flex;
+            padding: 8px;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 0 30px;
+            font-weight: 600;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--primary-glow); }
+
+        .btn-mic {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-dim);
+            width: 54px; height: 54px;
+        }
+        .btn-mic:hover { background: rgba(99,102,241,0.2); color: var(--primary); }
+        .btn-mic.recording {
+            animation: pulse 1.2s infinite;
+            background: var(--primary-glow);
+            color: var(--primary);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>SignAI Gloss Translator</h1>
+
+        <div class="gloss-card">
+            <div id="gloss-output" class="gloss-placeholder">Translation will appear here...</div>
+        </div>
+
+        <div class="input-group">
+            <button class="btn btn-mic" id="mic-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <input type="text" id="text-input" placeholder="Type an English sentence (e.g., 'I want food')">
+            <button class="btn btn-primary" id="translate-btn">TRANSLATE</button>
+        </div>
+
+        <div class="status" id="status-bar">Ready</div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text-input');
+        const translateBtn = document.getElementById('translate-btn');
+        const glossOutput = document.getElementById('gloss-output');
+        const micBtn = document.getElementById('mic-btn');
+        const statusBar = document.getElementById('status-bar');
+
+        async function translate(text) {
+            if (!text.trim()) return;
+            
+            glossOutput.innerHTML = '<span style="color:#475569">Thinking...</span>';
+            statusBar.textContent = "Connecting to server...";
+
+            try {
+                const response = await fetch('/api/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const glossText = data.isl_gloss.join(' ');
+                    glossOutput.className = 'gloss-result';
+                    glossOutput.textContent = glossText || '---';
+                    statusBar.textContent = "Successfully translated!";
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                glossOutput.className = 'gloss-placeholder';
+                glossOutput.textContent = "Error during translation.";
+                statusBar.textContent = "❌ Server error. Make sure app.py is running.";
+                console.error(err);
+            }
+        }
+
+        translateBtn.onclick = () => translate(textInput.value);
+        textInput.onkeypress = (e) => { if (e.key === 'Enter') translate(textInput.value); };
+
+        // ── Web Speech API (MIC) ──
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-IN';
+            recognition.interimResults = false;
+            
+            recognition.onstart = () => {
+                micBtn.classList.add('recording');
+                statusBar.textContent = 'Listening now...';
+            };
+
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                textInput.value = transcript;
+                statusBar.textContent = `Heard: "${transcript}"`;
+                translate(transcript);
+            };
+
+            recognition.onerror = (e) => {
+                micBtn.classList.remove('recording');
+                const errors = {
+                    'not-allowed': '❌ Mic BLOCKED. Click the 🔒 lock in the URL bar and select "Allow".',
+                    'network': '⚠️ Internet error. Check your connection.',
+                    'no-speech': '⚠️ No voice heard. Try speaking louder.'
+                };
+                statusBar.textContent = errors[e.error] || `❌ Mic Error: ${e.error}`;
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove('recording');
+                if (statusBar.textContent === 'Listening now...') statusBar.textContent = 'Ready';
+            };
+
+            micBtn.onclick = async () => {
+                // Request explicit mic permission first
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+                } catch (err) {
+                    statusBar.textContent = "❌ Permission denied. Check browser settings.";
+                    return;
+                }
+
+                try {
+                    recognition.start();
+                } catch(err) {
+                    recognition.stop();
+                }
+            };
+        } else {
+            micBtn.disabled = true;
+            statusBar.textContent = "⚠️ Chrome/Edge required for voice.";
+        }
+    </script>
+</body>
+</html>

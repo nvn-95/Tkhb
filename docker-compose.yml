@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  isl-pipeline:
+    build: .
+    container_name: isl-extractor
+    ports:
+      - "5000:5000"
+    volumes:
+      # This allows you to just drag videos into the folder locally
+      # and the Docker container will instantly see them!
+      - ./dataset_videos:/app/dataset_videos
+      # This saves your database cleanly back to your host machine
+      # so your extraction progress is never lost when Docker stops.
+      - ./sign_language.db:/app/sign_language.db
+    restart: unless-stopped
